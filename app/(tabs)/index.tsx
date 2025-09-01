@@ -6,7 +6,6 @@ import {
   FlatList,
   ImageStyle,
   ListRenderItemInfo,
-  Platform,
   Pressable,
   Share,
   View,
@@ -77,9 +76,6 @@ export default function HomeScreen() {
     <View style={{ flex: 1, backgroundColor: "black" }}>
       <FlatList
         pagingEnabled
-        snapToInterval={
-          Platform.OS === "android" ? height - bottomHeight : undefined
-        }
         initialNumToRender={1}
         showsVerticalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
