@@ -1,75 +1,118 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { useRef, useState } from "react";
+import {
+  Dimensions,
+  FlatList,
+  ImageStyle,
+  ListRenderItemInfo,
+  Platform,
+  Pressable,
+  Share,
+  View,
+  ViewStyle
+} from "react-native";
+
+import VideoWrapper from "./videoplayer";
+
+import { Image } from "expo-image";
+import { videos, videos2, videos3 } from "../../assets/data";
+
+const { height } = Dimensions.get("window");
+
+interface VideoWrapper {
+  data: ListRenderItemInfo<string>;
+  allVideos: string[];
+  visibleIndex: number;
+  pause: () => void;
+  share: (videoURL: string) => void;
+  pauseOverride: boolean;
+}
 
 export default function HomeScreen() {
+  const bottomHeight = useBottomTabBarHeight();
+
+  const [allVideos, setAllVideos] = useState(videos);
+  const [visibleIndex, setVisibleIndex] = useState(0);
+  const [pauseOverride, setPauseOverride] = useState(false);
+
+  const numOfRefreshes = useRef(0);
+
+  const fetchMoreData = () => {
+    if (numOfRefreshes.current === 0) {
+      setAllVideos([...allVideos, ...videos2]);
+    }
+    if (numOfRefreshes.current === 1) {
+      setAllVideos([...allVideos, ...videos3]);
+    }
+
+    numOfRefreshes.current += 1;
+  };
+
+  const onViewableItemsChanged = (event: any) => {
+    const newIndex = Number(event.viewableItems.at(-1).key);
+    setVisibleIndex(newIndex);
+  };
+
+  const pause = () => {
+    setPauseOverride(!pauseOverride);
+  };
+
+  const share = (videoURL: string) => {
+    setPauseOverride(true);
+    setTimeout(() => {
+      Share.share({
+        title: "Share This Video",
+        message: `Check out: ${videoURL}`,
+      });
+    }, 100);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={{ flex: 1, backgroundColor: "black" }}>
+      <FlatList
+        pagingEnabled
+        snapToInterval={
+          Platform.OS === "android" ? height - bottomHeight : undefined
+        }
+        initialNumToRender={1}
+        showsVerticalScrollIndicator={false}
+        onViewableItemsChanged={onViewableItemsChanged}
+        data={allVideos}
+        onEndReachedThreshold={0.3}
+        onEndReached={fetchMoreData}
+        renderItem={(data) => {
+          return (
+            <VideoWrapper
+              data={data}
+              allVideos={allVideos}
+              visibleIndex={visibleIndex}
+              pause={pause}
+              share={share}
+              pauseOverride={pauseOverride}
+            />
+          );
+        }}
+      />
+      {pauseOverride && (
+        <Pressable style={$pauseIndicator}>
+          <Image source="pause" style={$playButtonImage} />
+        </Pressable>
+      )}
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+const $pauseIndicator: ViewStyle = {
+  position: "absolute",
+  alignSelf: "center",
+  top: height / 2 - 25,
+};
+
+const $playButtonImage: ImageStyle = {
+  height: 50,
+  width: 50,
+  justifyContent: "center",
+  alignItems: "center",
+  resizeMode: "contain",
+};
