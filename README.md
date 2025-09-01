@@ -9,11 +9,23 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    ```bash
    npm install
    ```
+   
+2. Run pre build
 
-2. Start the app
+   ```bash
+   npx expo prebuild 
+   ```
+
+3. Start the app
 
    ```bash
    npx expo start
+   ```
+
+4. Android should use usb debugger
+   
+   ```bash
+   npx expo run:android --device 
    ```
 
 In the output, you'll find options to open the app in a
