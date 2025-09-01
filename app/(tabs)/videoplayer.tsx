@@ -25,6 +25,8 @@ interface VideoWrapper {
   pause: () => void;
   share: (videoURL: string) => void;
   pauseOverride: boolean;
+  onToggleMute: () => void;
+  isMuted: boolean;
 }
 
 const DOUBLE_PRESS_DELAY = 300;
@@ -36,6 +38,8 @@ export default ({
   pause,
   pauseOverride,
   share,
+  onToggleMute,
+  isMuted
 }: VideoWrapper) => {
   const bottomHeight = useBottomTabBarHeight();
   const { index, item } = data;
@@ -98,6 +102,7 @@ export default ({
         paused={visibleIndex !== index || pauseOverride}
         onProgress={handleProgress}
         onEnd={() => videoRef.current?.seek(0)}
+        muted={isMuted}
       />
 
       <View style={StyleSheet.absoluteFillObject}>
@@ -127,6 +132,15 @@ export default ({
           style={$shareButtonImage}
         />
         <Text style={$shareButtonText}>Share</Text>
+      </Pressable>
+      <Pressable onPress={onToggleMute} style={$muteButtonContainer}>
+        <Image
+          source={{
+            uri: "https://cdn-icons-png.flaticon.com/512/3592/3592813.png",
+          }}
+          style={$shareButtonImage}
+        />
+        <Text style={$shareButtonText}>Mute</Text>
       </Pressable>
     </View>
   );
@@ -165,7 +179,16 @@ const $shareButtonContainer: ViewStyle = {
   position: "absolute",
   zIndex: 999,
   elevation: 999,
-  bottom: Platform.OS === "android" ? 70 : 100,
+  bottom: Platform.OS === "android" ? 100 : 130,
+  right: 10,
+  alignItems: "center",
+  gap: 8,
+};
+const $muteButtonContainer: ViewStyle = {
+  position: "absolute",
+  zIndex: 999,
+  elevation: 999,
+  bottom: Platform.OS === "android" ? 40 : 70,
   right: 10,
   alignItems: "center",
   gap: 8,

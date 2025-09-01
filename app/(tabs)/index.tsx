@@ -32,6 +32,7 @@ interface VideoWrapper {
 export default function HomeScreen() {
   const bottomHeight = useBottomTabBarHeight();
 
+  const [isMuted, setIsMuted] = useState(true);
   const [allVideos, setAllVideos] = useState(videos);
   const [visibleIndex, setVisibleIndex] = useState(0);
   const [pauseOverride, setPauseOverride] = useState(false);
@@ -56,6 +57,10 @@ export default function HomeScreen() {
 
   const pause = () => {
     setPauseOverride(!pauseOverride);
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
   };
 
   const share = (videoURL: string) => {
@@ -90,6 +95,8 @@ export default function HomeScreen() {
               pause={pause}
               share={share}
               pauseOverride={pauseOverride}
+              onToggleMute={toggleMute}
+              isMuted={isMuted}
             />
           );
         }}
