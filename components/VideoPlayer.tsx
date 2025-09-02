@@ -31,7 +31,7 @@ interface VideoWrapper {
 
 const DOUBLE_PRESS_DELAY = 300;
 
-export default ({
+export default function VideoPlayer({
   data,
   allVideos,
   visibleIndex,
@@ -39,8 +39,8 @@ export default ({
   pauseOverride,
   share,
   onToggleMute,
-  isMuted
-}: VideoWrapper) => {
+  isMuted,
+}: VideoWrapper) {
   const bottomHeight = useBottomTabBarHeight();
   const { index, item } = data;
   const [lastPress, setLastPress] = useState(0);
@@ -60,12 +60,15 @@ export default ({
       setShowText(direction);
 
       if (videoRef.current) {
-        console.log('current', currentTime)
+        console.log("current", currentTime);
 
-        const newTime = direction === 'left' ? Math.min(currentTime - 10) : Math.min(currentTime + 10);
+        const newTime =
+          direction === "left"
+            ? Math.min(currentTime - 10)
+            : Math.min(currentTime + 10);
 
         videoRef.current.seek(newTime);
-        setCurrentTime(newTime)
+        setCurrentTime(newTime);
       }
 
       setTimeout(() => {
@@ -144,7 +147,7 @@ export default ({
       </Pressable>
     </View>
   );
-};
+}
 
 const $overlay: ViewStyle = {
   ...StyleSheet.absoluteFillObject,

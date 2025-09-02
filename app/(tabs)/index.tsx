@@ -9,11 +9,10 @@ import {
   Pressable,
   Share,
   View,
-  ViewStyle
+  ViewStyle,
 } from "react-native";
 
-import VideoWrapper from "./videoplayer";
-
+import VideoPlayerScreen from "@/components/VideoPlayer";
 import { Image } from "expo-image";
 import { videos, videos2, videos3 } from "../../assets/data";
 
@@ -84,7 +83,7 @@ export default function HomeScreen() {
         onEndReached={fetchMoreData}
         renderItem={(data) => {
           return (
-            <VideoWrapper
+            <VideoPlayerScreen
               data={data}
               allVideos={allVideos}
               visibleIndex={visibleIndex}
