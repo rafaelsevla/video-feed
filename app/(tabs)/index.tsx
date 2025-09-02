@@ -1,35 +1,21 @@
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 import { useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
-  ImageStyle,
-  ListRenderItemInfo,
   Pressable,
   Share,
   View,
-  ViewStyle,
+  ViewStyle
 } from "react-native";
 
+import { PauseIcon } from "@/components/ui/PauseIcon";
 import VideoPlayerScreen from "@/components/VideoPlayer";
-import { Image } from "expo-image";
 import { videos, videos2, videos3 } from "../../assets/data";
 
 const { height } = Dimensions.get("window");
 
-interface VideoWrapper {
-  data: ListRenderItemInfo<string>;
-  allVideos: string[];
-  visibleIndex: number;
-  pause: () => void;
-  share: (videoURL: string) => void;
-  pauseOverride: boolean;
-}
-
 export default function HomeScreen() {
-  const bottomHeight = useBottomTabBarHeight();
-
   const [isMuted, setIsMuted] = useState(true);
   const [allVideos, setAllVideos] = useState(videos);
   const [visibleIndex, setVisibleIndex] = useState(0);
@@ -98,7 +84,7 @@ export default function HomeScreen() {
       />
       {pauseOverride && (
         <Pressable style={$pauseIndicator}>
-          <Image source="pause" style={$playButtonImage} />
+          <PauseIcon />
         </Pressable>
       )}
     </View>
@@ -109,12 +95,4 @@ const $pauseIndicator: ViewStyle = {
   position: "absolute",
   alignSelf: "center",
   top: height / 2 - 25,
-};
-
-const $playButtonImage: ImageStyle = {
-  height: 50,
-  width: 50,
-  justifyContent: "center",
-  alignItems: "center",
-  resizeMode: "contain",
 };

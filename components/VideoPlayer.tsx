@@ -13,7 +13,7 @@ import {
   ViewStyle,
 } from "react-native";
 
-import { Image, ImageStyle } from "expo-image";
+import { ImageStyle } from "expo-image";
 import Video, { VideoRef } from "react-native-video";
 
 const { height, width } = Dimensions.get("window");
@@ -128,21 +128,11 @@ export default function VideoPlayer({
       </View>
 
       <Pressable onPress={() => share(item)} style={$shareButtonContainer}>
-        <Image
-          source={{
-            uri: "https://cdn-icons-png.flaticon.com/512/3592/3592813.png",
-          }}
-          style={$shareButtonImage}
-        />
+        <View style={$shareButtonImage} />
         <Text style={$shareButtonText}>Share</Text>
       </Pressable>
       <Pressable onPress={onToggleMute} style={$muteButtonContainer}>
-        <Image
-          source={{
-            uri: "https://cdn-icons-png.flaticon.com/512/3592/3592813.png",
-          }}
-          style={$shareButtonImage}
-        />
+        <View style={$shareButtonImage} />
         <Text style={$shareButtonText}>Mute</Text>
       </Pressable>
     </View>
@@ -200,10 +190,7 @@ const $muteButtonContainer: ViewStyle = {
 const $shareButtonImage: ImageStyle = {
   height: 25,
   width: 25,
-  justifyContent: "center",
-  alignItems: "center",
-  resizeMode: "contain",
-  tintColor: "white",
+  backgroundColor: "white",
 };
 
 const $shareButtonText: TextStyle = {
