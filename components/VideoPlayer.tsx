@@ -1,5 +1,4 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-
 import { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
@@ -47,7 +46,12 @@ export default function VideoPlayer({
   const videoRef = useRef<VideoRef>(null);
   const [showText, setShowText] = useState<"left" | "right" | null>(null);
   const pressTimeout = useRef<NodeJS.Timeout | null | number>(null);
-  const [currentTime, setCurrentTime] = useState(0);
+
+  const [videoProgress, setVideoProgress] = useState({
+    currentTime: 0,
+    seekableDuration: 0,
+  });
+  const [progressBarWidth, setProgressBarWidth] = useState(0);
 
   const handleDoublePress = (direction: "left" | "right") => {
     const now = Date.now();
@@ -60,15 +64,16 @@ export default function VideoPlayer({
       setShowText(direction);
 
       if (videoRef.current) {
-        console.log("current", currentTime);
-
         const newTime =
           direction === "left"
-            ? Math.min(currentTime - 10)
-            : Math.min(currentTime + 10);
+            ? Math.max(videoProgress.currentTime - 10, 0)
+            : Math.min(
+                videoProgress.currentTime + 10,
+                videoProgress.seekableDuration
+              );
 
         videoRef.current.seek(newTime);
-        setCurrentTime(newTime);
+        setVideoProgress({ ...videoProgress, currentTime: newTime });
       }
 
       setTimeout(() => {
@@ -82,13 +87,33 @@ export default function VideoPlayer({
     setLastPress(now);
   };
 
-  const handleProgress = (data: any) => {
-    setCurrentTime(data.currentTime);
+  const handleProgressBarTouch = (event: any) => {
+    if (!progressBarWidth || videoProgress.seekableDuration === 0) return;
+
+    // A posição do toque em relação ao componente
+    const touchX = event.nativeEvent.locationX;
+    const touchPercentage = touchX / progressBarWidth;
+    const newTime = touchPercentage * videoProgress.seekableDuration;
+
+    if (videoRef.current) {
+      videoRef.current.seek(newTime);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
   };
 
   useEffect(() => {
     videoRef.current?.seek(0);
   }, [visibleIndex]);
+
+  const progressPercentage =
+    videoProgress.seekableDuration > 0
+      ? (videoProgress.currentTime / videoProgress.seekableDuration) * 100
+      : 0;
 
   return (
     <View
@@ -103,7 +128,7 @@ export default function VideoPlayer({
         style={{ height: height - bottomHeight, width }}
         resizeMode="cover"
         paused={visibleIndex !== index || pauseOverride}
-        onProgress={handleProgress}
+        onProgress={(data) => setVideoProgress(data)}
         onEnd={() => videoRef.current?.seek(0)}
         muted={isMuted}
       />
@@ -135,6 +160,26 @@ export default function VideoPlayer({
         <View style={$shareButtonImage} />
         <Text style={$shareButtonText}>Mute</Text>
       </Pressable>
+
+      <View style={$touchContainer}>
+        <Pressable onPressIn={handleProgressBarTouch} style={$touchInner} />
+      </View>
+      <View style={$progressContainer}>
+        <View
+          onLayout={(event) =>
+            setProgressBarWidth(event.nativeEvent.layout.width)
+          }
+          style={$progressBarContainer}
+        >
+          <View style={[$progressBar, { width: `${progressPercentage}%` }]} />
+        </View>
+        <View style={$timeTextContainer}>
+          <Text style={$timeText}>{formatTime(videoProgress.currentTime)}</Text>
+          <Text style={$timeText}>
+            {formatTime(videoProgress.seekableDuration)}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -172,7 +217,7 @@ const $shareButtonContainer: ViewStyle = {
   position: "absolute",
   zIndex: 999,
   elevation: 999,
-  bottom: Platform.OS === "android" ? 100 : 130,
+  bottom: Platform.OS === "android" ? 120 : 130,
   right: 10,
   alignItems: "center",
   gap: 8,
@@ -181,7 +226,7 @@ const $muteButtonContainer: ViewStyle = {
   position: "absolute",
   zIndex: 999,
   elevation: 999,
-  bottom: Platform.OS === "android" ? 40 : 70,
+  bottom: Platform.OS === "android" ? 60 : 70,
   right: 10,
   alignItems: "center",
   gap: 8,
@@ -194,6 +239,57 @@ const $shareButtonImage: ImageStyle = {
 };
 
 const $shareButtonText: TextStyle = {
+  color: "white",
+  fontSize: 12,
+  fontWeight: "bold",
+};
+
+const $progressContainer: ViewStyle = {
+  position: "absolute",
+  bottom: Platform.OS === "android" ? 10 : 30,
+  left: 0,
+  right: 0,
+  paddingHorizontal: 10,
+  alignItems: "center",
+};
+
+const $touchContainer: ViewStyle = {
+  position: "absolute",
+  bottom: Platform.OS === "android" ? 20 : 30,
+  left: 0,
+  right: 0,
+  height: 30,
+  width: "100%",
+  paddingHorizontal: 10,
+};
+const $touchInner: ViewStyle = {
+  left: 0,
+  right: 0,
+  height: 30,
+  width: "100%",
+};
+
+const $progressBarContainer: ViewStyle = {
+  height: 4,
+  width: "100%",
+  backgroundColor: "rgba(255, 255, 255, 0.3)",
+  borderRadius: 2,
+};
+
+const $progressBar: ViewStyle = {
+  height: "100%",
+  backgroundColor: "white",
+  borderRadius: 2,
+};
+
+const $timeTextContainer: ViewStyle = {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  width: "100%",
+  marginTop: 5,
+};
+
+const $timeText: TextStyle = {
   color: "white",
   fontSize: 12,
   fontWeight: "bold",
