@@ -20,7 +20,6 @@ export function ProgressPlayer({
   const handleProgressBarTouch = (event: any) => {
     if (!progressBarWidth || videoProgress.seekableDuration === 0) return;
 
-    // A posição do toque em relação ao componente
     const touchX = event.nativeEvent.locationX;
     const touchPercentage = touchX / progressBarWidth;
     const newTime = touchPercentage * videoProgress.seekableDuration;

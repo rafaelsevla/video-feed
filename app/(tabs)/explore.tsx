@@ -1,34 +1,46 @@
-import React, { useEffect, useState } from "react";
-import { GestureResponderEvent, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
-// Define a interface para as props do componente ProgressBar
 interface ProgressBarProps {
   total: number;
   progress: number;
-  onBarPress: (event: GestureResponderEvent) => void;
+  onBarPress: (percentage: number) => void;
   barWidth: number;
   setBarWidth: (width: number) => void;
 }
 
-const ProgressBar: React.FC<ProgressBarProps> = ({ total, progress, onBarPress, barWidth, setBarWidth }) => {
+const ProgressBar: React.FC<ProgressBarProps> = ({
+  total,
+  progress,
+  onBarPress,
+  barWidth,
+  setBarWidth,
+}) => {
   const safeProgress = Math.min(Math.max(progress, 0), total);
   const percentage = (safeProgress / total) * 100;
 
   return (
     <View style={styles.container}>
-      <TouchableWithoutFeedback onPress={onBarPress}>
-        <View 
-          style={styles.progressBarBackground}
-          onLayout={(event) => {
-            const { width } = event.nativeEvent.layout;
-            if (barWidth === 0) { // Apenas define a largura na primeira vez
-              setBarWidth(width);
-            }
-          }}
-        >
-          <View style={[styles.progressBarFilled, { width: `${percentage}%` }]} />
-        </View>
-      </TouchableWithoutFeedback>
+      <View
+        style={styles.progressBarBackground}
+        onLayout={(event) => {
+          const { width } = event.nativeEvent.layout;
+          if (barWidth === 0) {
+            setBarWidth(width);
+          }
+        }}
+        onStartShouldSetResponder={() => true}
+        onResponderGrant={(e) => {
+          const touchX = e.nativeEvent.locationX;
+          onBarPress(touchX / barWidth);
+        }}
+        onResponderMove={(e) => {
+          const touchX = e.nativeEvent.locationX;
+          onBarPress(touchX / barWidth);
+        }}
+      >
+        <View style={[styles.progressBarFilled, { width: `${percentage}%` }]} />
+      </View>
 
       <Text style={styles.progressText}>{`${Math.round(percentage)}%`}</Text>
     </View>
@@ -39,48 +51,60 @@ export default function TabTwoScreen() {
   const [currentProgress, setCurrentProgress] = useState<number>(0);
   const [barWidth, setBarWidth] = useState<number>(0);
   const totalSteps = 100;
+  const [isDragging, setIsDragging] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Simula o progresso por 5 minutos ou continua de onde foi clicado
-  useEffect(() => {
-    // 5 minutos = 300 segundos = 300,000 milissegundos
-    const interval = setInterval(() => {
-      setCurrentProgress((prevProgress) => {
-        if (prevProgress >= totalSteps) {
-          clearInterval(interval);
+  const startInterval = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setCurrentProgress((prev) => {
+        if (prev >= totalSteps) {
+          clearInterval(intervalRef.current!);
           return totalSteps;
         }
-        return prevProgress + 1;
+        return prev + 1;
       });
-    }, 3000); // Incrementa 1 a cada 3 segundos
+    }, 1000);
+  };
 
-    return () => clearInterval(interval);
-  }, [currentProgress]); // A dependência em currentProgress reinicia o timer ao clicar
+  useEffect(() => {
+    if (!isDragging) {
+      startInterval();
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
 
-  const handleBarPress = (event: GestureResponderEvent) => {
-    if (barWidth === 0) return; // Não faz nada se a largura ainda não foi definida
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isDragging]);
 
-    const tapLocationX = event.nativeEvent.locationX;
-    const newProgressPercentage = (tapLocationX / barWidth);
-    const newProgress = newProgressPercentage * totalSteps;
+  const handleBarPress = (percentage: number) => {
+    if (barWidth === 0) return;
+    setIsDragging(true);
+    const newProgress = Math.round(percentage * totalSteps);
+    setCurrentProgress(Math.min(Math.max(newProgress, 0), totalSteps));
+  };
 
-    setCurrentProgress(Math.min(Math.round(newProgress), totalSteps));
+  const handleRelease = () => {
+    setIsDragging(false);
   };
 
   return (
     <View style={appStyles.container}>
-      <Text style={appStyles.title}>Baixando Arquivos</Text>
-
-      <ProgressBar 
-        total={totalSteps} 
-        progress={currentProgress} 
-        onBarPress={handleBarPress}
-        barWidth={barWidth}
-        setBarWidth={setBarWidth}
-      />
-
-      <Text style={appStyles.subtitle}>
-        {`Progresso: ${currentProgress} de ${totalSteps}`}
-      </Text>
+      <View
+        style={{ width: "100%", alignItems: "center" }}
+        onStartShouldSetResponder={() => true}
+        onResponderRelease={handleRelease}
+      >
+        <ProgressBar
+          total={totalSteps}
+          progress={currentProgress}
+          onBarPress={handleBarPress}
+          barWidth={barWidth}
+          setBarWidth={setBarWidth}
+        />
+      </View>
     </View>
   );
 }
@@ -92,16 +116,6 @@ const appStyles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  subtitle: {
-    marginTop: 20,
-    fontSize: 18,
-    color: "#666",
   },
 });
 
