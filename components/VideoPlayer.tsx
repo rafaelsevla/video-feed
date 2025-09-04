@@ -4,7 +4,7 @@ import { Dimensions, ListRenderItemInfo, Platform, View } from "react-native";
 
 import Video, { VideoRef } from "react-native-video";
 import { LateralButtons } from "./VideoPlayerComponents/lateralButtons";
-import { ProgressPlayer } from "./VideoPlayerComponents/progress";
+import { ProgressBar } from "./VideoPlayerComponents/progressBarTwoDotZero";
 import { ScreenActions } from "./VideoPlayerComponents/screenActions";
 
 const { height, width } = Dimensions.get("window");
@@ -43,9 +43,58 @@ export default function VideoPlayer({
   });
   const [progressBarWidth, setProgressBarWidth] = useState(0);
 
+  // props pro novo progressbar
+  const [isDragging, setIsDragging] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
     videoRef.current?.seek(0);
   }, [visibleIndex]);
+
+  const startInterval = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setVideoProgress((prev) => {
+        if (prev.currentTime >= prev.seekableDuration) {
+          clearInterval(intervalRef.current!);
+          return {
+            currentTime: prev.seekableDuration,
+            seekableDuration: prev.seekableDuration,
+          };
+        }
+        return {
+          currentTime: prev.currentTime + 1,
+          seekableDuration: prev.seekableDuration,
+        };
+      });
+    }, 1000);
+  };
+
+  useEffect(() => {
+    if (!isDragging) {
+      startInterval();
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isDragging]);
+
+  const handleBarPress = (percentage: number) => {
+    if (progressBarWidth === 0) return;
+    setIsDragging(true);
+    const newProgress = Math.round(percentage * videoProgress.seekableDuration);
+    console.log("progress", newProgress);
+    videoRef.current?.seek(newProgress);
+    setVideoProgress({ ...videoProgress, currentTime: newProgress });
+  };
+
+  const handleRelease = () => {
+    console.log("handleRelease", JSON.stringify(videoProgress, null, 2));
+    setIsDragging(false);
+  };
 
   return (
     <View
@@ -76,11 +125,20 @@ export default function VideoPlayer({
 
       <LateralButtons onToggleMute={onToggleMute} onShare={() => share(item)} />
 
-      <ProgressPlayer
+      {/* <ProgressPlayer
         videoProgress={videoProgress}
         videoRef={videoRef}
-        progressBarWidth={progressBarWidth}
-        setProgressBarWidth={setProgressBarWidth}
+        progressBarWidth={progressBarWidth} // ja foram usadas
+        setProgressBarWidth={setProgressBarWidth} // ja foram usadas
+      /> */}
+
+      <ProgressBar
+        handleRelease={handleRelease}
+        total={videoProgress.seekableDuration}
+        progress={videoProgress.currentTime}
+        onBarPress={handleBarPress}
+        barWidth={progressBarWidth}
+        setBarWidth={setProgressBarWidth}
       />
     </View>
   );
