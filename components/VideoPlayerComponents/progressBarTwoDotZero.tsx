@@ -29,7 +29,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
         alignItems: "center",
 
         position: "absolute",
-        bottom: Platform.OS === "android" ? 20 : 30,
+        bottom: Platform.OS === "android" ? 20 : 100,
         left: 0,
         right: 0,
         backgroundColor: '#f00f00'
